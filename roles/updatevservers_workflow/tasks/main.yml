@@ -1,0 +1,53 @@
+#get_all_vservers
+- name: Link certificate
+  include_role:
+    name: get_all_vservers
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+
+# parse vservers
+- name: Get vservers
+  include_role:
+    name: parse_vservers
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_existing_ssl_certkey: "{{ existing_ssl_certkey }}"
+
+- name: Include vars of vserver data generated from previous step
+  ansible.builtin.include_vars:
+    file: tmpdata.yml
+
+# loop through vservers and link to our new cert
+- name: Loop through vservers (non SNI)
+  include_role:
+    name: bind_vserver
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_vservername: "{{ item }}"
+    nitro_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_action: "update"
+    nitro_snicert: "false"
+  with_items: "{{ nonsni_certs }}"
+
+- name: Loop through vservers (SNI)
+  include_role:
+    name: bind_vserver
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_vservername: "{{ item }}"
+    nitro_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_action: "update"
+    nitro_snicert: "false"
+  with_items: "{{ sni_certs }}"
+
+- name: Show results
+  debug:
+    msg: "Updated cert from {{ existing_ssl_certkey }} to {{ ssl_nitro_certkey_name }} for non-SNI certs: {{ nonsni_certs }} and for SNI certs: {{ sni_certs }}"
