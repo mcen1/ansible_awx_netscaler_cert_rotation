@@ -4,27 +4,11 @@
   collections:
     - community.network
     - ab.beyondtrust_secrets
-    - ab.tinytally_collection
   vars_files:
     - "vars/all.yml"
     - "vars/{{ awxenvironment | default('staging') }}.yml"
-#    - "vars/secret.yml"
     - "operational_files/{{ operational_filename }}.yml"
   tasks:
     - name: "Do {{ operation }} workflow"
       include_role:
         name: "{{ operation }}"
-      vars:
-        netscaler_hostname: "{{ mynetscaler_hostname }}"
-        netscaler_username: "{{ mynetscaler_username }}"
-        netscaler_password: "{{ mynetscaler_password }}"
-#        ssl_cert_location_privk: "{{ privssl_cert_location }}"
-#        ssl_cert_location_pubk: "{{ pubssl_cert_location }}"
-#        ssl_privkey_name: "awxkeyprivate2d.pem"
-#        ssl_pubkey_name: "awxkeypublic2d.cer"
-#        ssl_pubkey_filename: "{{ ssl_pubkey_name }}"
-#        ssl_privkey_filename: "{{ ssl_privkey_name }}"
-#        ssl_ca_name: "SCM Internal CA"
-#        skipcertload: True
-#      when: operation=="sslkey_workflow"
-
