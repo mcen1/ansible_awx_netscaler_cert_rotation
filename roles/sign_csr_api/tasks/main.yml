@@ -1,0 +1,31 @@
+- name: "Set to standard (default)"
+  set_fact:
+    certType: 4303
+- name: "Set to wildcard (if common name starts with *)"
+  set_fact:
+    certType: 4308
+  when: nitro_ssl_newkey_csr.commonname is match("\*.*")
+
+- name: Send CSR to company API
+  ansible.builtin.uri:
+    url: https://api.company.com/v1/cert/issue
+    method: POST
+    body:
+      csr: "{{ ssl_csr_contents }}"
+      autoRenewal: "{{ }}"
+      notificationEmails: "{{ }}"
+      #"standard": 4303,
+      #"multiple_san": 4309,
+      #"wild_card": 4308
+      SSLCertType: "{{ certType }}"
+    status_code: 201
+    body_format: json
+    force_basic_auth: true
+    user: "{{ api_username }}"
+    password: "{{ api_password }}"
+  register: webout
+  ignore_errors: true
+- name: show webout
+  debug:
+    msg: "{{ webout }}"
+

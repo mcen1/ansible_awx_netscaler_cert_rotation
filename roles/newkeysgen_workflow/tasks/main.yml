@@ -1,0 +1,99 @@
+- name: Include vars from vars/newkeysgen_workflow.yml 
+  ansible.builtin.include_vars:
+    file: vars/newkeysgen_workflow.yml
+
+# Gather credentials from BeyondTrust for our necessary subsequent steps
+- name: "Gather credentials"
+  include_role:
+    name: "gather_creds"
+
+# Create a new RSA key on the appliance
+- name: "Generate new RSA key"
+  include_role:
+    name: "create_rsakey"
+  vars:
+    nitro_ssl_newkey_filename: "{{ ssl_new_key.private_key_name }}"
+    nitro_ssl_newkey_bits: "{{ ssl_new_key.bits}}"
+    nitro_ssl_newkey_aes256: "{{ ssl_new_key.aes256 }}"
+    nitro_ssl_newkey_password: "{{ ssl_new_key_password }}"
+  when: ssl_newkey_type|lower() == "rsa" and (skipsteps is not defined or not skipsteps)
+
+# Generate a new CSR on the appliance
+- name: "Generate a CSR"
+  include_role:
+    name: "create_csr"
+  vars:
+    # the existing key we created in the first step
+    nitro_ssl_newkey_filename: "{{ ssl_new_key.private_key_name }}"
+    nitro_ssl_newkey_password: "{{ ssl_new_key_password }}"
+  when: ssl_newkey_type|lower() == "rsa"
+
+# Download the CSR from the appliance into a variable nitro_getfile_output.nitro_object[0].filecontent
+- name: "Load CSR into variable"
+  include_role:
+    name: "get_file"
+  vars:
+    file_upload_filename: "{{ nitro_ssl_newkey_csr.filename }}"
+    file_upload_filelocation: "{{ default_nitro_ssl_file_upload_filelocation }}"
+
+# Enroll the CSR into Sectigo via the API endpoint
+- name: "Post CSR to API endpoint"
+  include_role:
+    name: "sign_csr_api"
+  vars:
+    # contents must be the "real" file contents and not base64 encoded
+    # per https://www.sectigo.com/uploads/audio/Certificate-Manager-20.1-Rest-API.html#resource-SSL-enroll
+    ssl_csr_contents: "{{ nitro_getfile_output.nitro_object[0].filecontent | b64decode  }}"
+
+
+# stub to take {{ nitro_getfile_output.nitro_object[0].filecontent }} and send to api
+- name: fail
+  fail:
+#
+- name: "Download from Sectigo"
+  include_role:
+    name: "download_from_url"
+  vars:
+    sectigo_url: ""
+    file_dest: "signed_certificate.cer"
+
+- name: Get public key contents of sectigo cert (download or supply URL?)
+  shell: cat signed_certificate.cer
+  register: ssl_cert_contents_pubk
+
+# Convert Sectigo cert into base64 to comply with Netscaler API demands
+- name: Set fact for b64 key
+  set_fact:
+    ssl_cert_b64_pk: "{{ ssl_cert_contents_pubk.stdout | b64encode }}"
+
+# Upload our Sectigo signed certificate to the appliance
+- name: Upload public key file
+  include_role:
+    name: upload_file
+  vars:
+    file_upload_name: "{{ ssl_new_key.public_cer_name }}"
+    file_upload_filename: "{{ ssl_new_key.public_cer_name }}"
+    file_upload_filelocation: "{{ default_nitro_ssl_file_upload_filelocation }}"
+    file_upload_filecontent: "{{ ssl_cert_b64_pk }}"
+
+# Update the keypair
+- name: Update public and private keypair
+  include_role:
+    name: update_cert
+  vars:
+    nitro_ssl_cert: "{{ ssl_new_key.public_cer_name }}"
+    nitro_ssl_key: "{{ ssl_new_key.private_key_name }}"
+    nitro_ssl_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_expirymonitor: "DISABLED"
+    nitro_ssl_ca_name: "{{ ssl_ca_name }}"
+    nitro_ssl_password: "{{ ssl_new_key_password }}"
+    nitro_ssl_passwordplain: "{{ ssl_new_key_password }}"
+
+# Link cert to CA
+- name: Link certificate
+  include_role:
+    name: link_cert
+  vars:
+    nitro_ssl_ca_name: "{{ ssl_ca_name }}"
+    nitro_ssl_certkey: "{{ ssl_nitro_certkey_name }}"
+

@@ -1,0 +1,17 @@
+- name: Update SSL cert
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ nsip }}"
+    nitro_user: "{{ nitro_username }}"
+    nitro_pass: "{{ nitro_password }}"
+    operation: action
+    action: import
+    resource: sslcertfile
+    name: "{{ ssl_cert_name }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      name: "{{ ssl_cert_name }}"
+      src: "{{ ssl_cert_path }}"
+
+# https://developer-docs.netscaler.com/en-us/citrix-adm-nitro-api-reference/configuration/system/SSLSettings/ssl_cert.html 
+# unsure how to specify payload

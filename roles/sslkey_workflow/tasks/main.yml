@@ -1,0 +1,126 @@
+- name: Get private key contents
+  shell: cat "{{ ssl_cert_location_privk }}"
+  register: ssl_cert_contents_privk
+- name: set fact for b64 key
+  set_fact:
+    ssl_cert_b64_pk: "{{ ssl_cert_contents_privk.stdout | b64encode }}"
+
+# may not need to do this if we're just updating the cert
+- name: Upload private key file
+  include_role:
+    name: upload_file
+  vars:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    file_upload_name: "{{ ssl_privkey_name }}"
+    file_upload_filename: "{{ ssl_privkey_filename }}"
+    file_upload_filelocation: "{{ default_nitro_ssl_file_upload_filelocation }}"
+    file_upload_filecontent: "{{ ssl_cert_b64_pk }}"
+  when: skipcertload is not defined or not skipcertload
+
+# might just need to download from Sectigo, or better yet, supply Sectigo URL?
+- name: Get public key contents
+  shell: cat "{{ ssl_cert_location_pubk }}"
+  register: ssl_cert_contents_pubk
+- name: set fact for b64 key
+  set_fact:
+    ssl_cert_b64_pk: "{{ ssl_cert_contents_pubk.stdout | b64encode }}"
+- name: Upload public key file
+  include_role:
+    name: upload_file
+  vars:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    file_upload_name: "{{ ssl_pubkey_name }}"
+    file_upload_filename: "{{ ssl_pubkey_filename }}"
+    file_upload_filelocation: "{{ default_nitro_ssl_file_upload_filelocation }}"
+    file_upload_filecontent: "{{ ssl_cert_b64_pk }}"
+  when: skipcertload is not defined or not skipcertload
+
+# once both certs exist on system, bind them together
+- name: Update public and private keypair
+  include_role:
+    name: update_cert
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_ssl_cert_name: "{{ ssl_pubkey_name }}"
+    nitro_expirymonitor: "disabled"
+    nitro_ssl_cert: "{{ ssl_pubkey_name }}"
+    nitro_ssl_key: "{{ ssl_privkey_name }}"
+    nitro_ssl_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_expirymonitor: "DISABLED"
+    nitro_ssl_ca_name: "{{ ssl_ca_name }}"
+
+# link cert to ca
+- name: Link certificate
+  include_role:
+    name: link_cert
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_ssl_cert_name: "{{ ssl_pubkey_name }}"
+    nitro_ssl_ca_name: "{{ ssl_ca_name }}"
+    nitro_ssl_certkey: "{{ ssl_nitro_certkey_name }}"
+  when: skipcertload is not defined or not skipcertload
+
+
+# find vservers
+
+#get_all_vservers
+- name: Link certificate
+  include_role:
+    name: get_all_vservers
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+
+# parse vservers
+- name: Get vservers
+  include_role:
+    name: parse_vservers
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_existing_ssl_certkey: "{{ existing_ssl_certkey }}"
+
+- name: Include vars of vserver data generated from previous step
+  ansible.builtin.include_vars:
+    file: tmpdata.yml
+
+# loop through vservers and link to our new cert
+- name: Loop through vservers (non SNI)
+  include_role:
+    name: bind_vserver
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_vservername: "{{ item }}"
+    nitro_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_action: "update"
+    nitro_snicert: "false"
+  with_items: "{{ nonsni_certs }}"
+
+- name: Loop through vservers (SNI)
+  include_role:
+    name: bind_vserver
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_vservername: "{{ item }}"
+    nitro_certkey: "{{ ssl_nitro_certkey_name }}"
+    nitro_action: "update"
+    nitro_snicert: "false"
+  with_items: "{{ sni_certs }}"
+
+- name: Show results
+  debug:
+    msg: "Updated cert from {{ existing_ssl_certkey }} to {{ ssl_nitro_certkey_name }} for non-SNI certs: {{ nonsni_certs }} and for SNI certs: {{ sni_certs }}"

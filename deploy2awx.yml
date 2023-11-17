@@ -1,0 +1,27 @@
+name: deploy2awx
+
+on:
+  push:
+    paths:
+      - "awx_config.yml"
+    branches:
+      - "staging"
+      - "production"
+jobs:
+  deploy2awx:
+    runs-on: [self-hosted, linux, docker]
+    container:
+      image: company.com/containers/automation-awx-cac:latest
+      options: --cpus 1 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run playbook
+        run:  |
+          echo -e "---\nawx_access_token: '${{ secrets.staging_awx_access_token }}'" > /var/awx/vars/staging_awxtoken.yml
+          echo -e "---\nawx_access_token: '${{ secrets.production_awx_access_token }}'" > /var/awx/vars/production_awxtoken.yml
+          [ -f awx_config_${GITHUB_REF##*/}_patch.yml ] && cat awx_config_${GITHUB_REF##*/}_patch.yml >> awx_config.yml
+          cat awx_config.yml
+          cp awx_config.yml /var/awx/awx_config.yml
+          cd /var/awx
+          ansible-playbook configure_awx_resources.yml -i inventory.yml -e "deploy_env=${GITHUB_REF##*/}" -e "awx_config_file=awx_config.yml"
+

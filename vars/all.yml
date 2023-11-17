@@ -1,0 +1,4 @@
+---
+bt_nitro_username_title: "TBD dont go"
+default_nitro_ssl_file_upload_filelocation: "/nsconfig/ssl/"
+bt_nitro_key_password_title: "Netscaler key"

@@ -1,0 +1,21 @@
+#https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/ssl/sslrsakey
+- name: "Create new RSA key on appliance"
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_user: "{{ netscaler_username }}"
+    nitro_pass: "{{ netscaler_password }}"
+    operation: action
+    action: create
+    resource: sslrsakey
+    name: "{{ nitro_ssl_newkey_filename }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      keyfile: "{{ nitro_ssl_newkey_filename }}"
+      bits: "{{ nitro_ssl_newkey_bits }}"
+      aes256: "{{ nitro_ssl_newkey_aes256|default(True) }}"
+      password: "{{ nitro_ssl_newkey_password }}"
+#  failed_when: nitro_request_output.nitro_message != "OK (0 bytes)"
+#  changed_when: nitro_request_output.nitro_message == "OK (0 bytes)"
+  register: nitro_request_output
+

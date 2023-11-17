@@ -1,0 +1,20 @@
+# https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/ssl/sslcertlink
+- name: "Set {{ nitro_ssl_certkey }} to use {{ nitro_ssl_cert }}"
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ nitro_ip }}"
+    nitro_user: "{{ nitro_username }}"
+    nitro_pass: "{{ nitro_password }}"
+    operation: action
+    action: update
+    resource: sslcertkey 
+    #name: "{{ nitro_file_upload_name }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      certkey: "{{ nitro_ssl_certkey }}"
+      cert: "{{ nitro_ssl_cert }}"
+      #snicert ?
+#  failed_when: nitro_request_output.nitro_message != ""
+#  changed_when: nitro_request_output.nitro_message == "OK (0 bytes)"
+  register: nitro_request_output
+

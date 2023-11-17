@@ -1,0 +1,33 @@
+- name: Get public key contents
+  shell: cat "{{ ssl_cert_location_pubk }}"
+  register: ssl_cert_contents_pubk
+- name: set fact for b64 key
+  set_fact:
+    ssl_cert_b64_pk: "{{ ssl_cert_contents_pubk.stdout | b64encode }}"
+- name: Upload public key file
+  include_role:
+    name: upload_file
+  vars:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    file_upload_name: "{{ ssl_pubkey_name }}"
+    file_upload_filename: "{{ ssl_pubkey_filename }}"
+    file_upload_filelocation: "{{ default_nitro_ssl_file_upload_filelocation }}"
+    file_upload_filecontent: "{{ ssl_cert_b64_pk }}"
+  when: skipcertload is not defined or not skipcertload
+
+# once both certs exist on system, bind them together
+- name: "Update public and private keypair for {{ ssl_nitro_certkey_name }}"
+  include_role:
+    name: update_cert_inplace
+  vars:
+    nitro_ip: "{{ netscaler_hostname }}"
+    nitro_username: "{{ netscaler_username }}"
+    nitro_password: "{{ netscaler_password }}"
+    nitro_ssl_cert: "{{ ssl_pubkey_name }}"
+    nitro_ssl_certkey: "{{ ssl_nitro_certkey_name }}"
+
+- name: Show results
+  debug:
+    msg: "Updated cert {{ ssl_nitro_certkey_name }} to use {{ ssl_pubkey_name }}"

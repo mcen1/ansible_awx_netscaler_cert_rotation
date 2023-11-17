@@ -1,0 +1,21 @@
+job_templates:
+  - name: "automation-awx-netscaler_cert_rotation-job" # Please name this in a way that matches your github repository name followed by '-job'
+    description: "Rotate netscaler certificates"
+    inventory: "Empty Inventory" # Change this to either your own inventory or your AWX org's 'empty inventory'
+    project: "automation-awx-netscaler_cert_rotation-project" # Change this to your project's name in AWX
+    execution_environment: "awx-ee-base-ubi9"
+    playbook: "main.yml" # change this to suit your needs
+    extra_vars:
+      jobenvironment: "{{ deploy_env }}" # dynamic variable allowing you to govern staging vs production settings
+      operational_filename: "Fill in either rotatesigner or newkeysgen"
+    ask_variables_on_launch: yes # Need to set this if you intend to have dynamic variables in your playbook
+#    templatecredentials:
+#      - "CHANGEME" # Your credentials for the job to use for login, BeyondTrust, etc
+    roles:
+      - type: execute
+        users:
+          - "itoapi_user" # Need to set this if you intend your job to be called via ITOAPI
+        teams:
+          - "SME Users" # Change this to your team's name in AWX
+
+

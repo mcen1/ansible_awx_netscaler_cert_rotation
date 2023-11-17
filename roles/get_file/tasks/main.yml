@@ -1,0 +1,27 @@
+# https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/system/systemfile
+- name: set fact for url encoded file path
+  set_fact:
+    file_upload_filelocation_encoded: "{{ file_upload_filelocation|replace('/','%2F') }}"
+- name: "Get {{ file_upload_filelocation_encoded }}{{ file_upload_filename }}"
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_user: "{{ netscaler_username }}"
+    nitro_pass: "{{ netscaler_password }}"
+    operation: get_by_args
+    action: get
+    resource: "systemfile"
+    name: "{{ file_upload_filename }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    args:
+      filename: "{{ file_upload_filename }}"
+      filelocation: "{{ file_upload_filelocation_encoded }}"
+
+#  failed_when: nitro_getfile_output.nitro_message != "OK (0 bytes)"
+#  changed_when: nitro_getfile_output.nitro_message == "OK (0 bytes)"
+  ignore_errors: True
+  register: nitro_getfile_output
+
+- name: "Show nitro_getfile_output"
+  debug:
+    msg: "{{ nitro_getfile_output.nitro_object[0].filecontent }}"

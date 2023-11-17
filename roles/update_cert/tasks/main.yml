@@ -1,0 +1,21 @@
+# https://docs.ansible.com/ansible/latest/collections/community/network/netscaler_ssl_certkey_module.html
+# move to this?
+# https://netscaler.github.io/ansible-collection-netscaleradc/collections/netscaler/adc/sslcertkey_module.html#ansible-collections-netscaler-adc-sslcertkey-module
+- name: Setup ssl certkey
+  delegate_to: "localhost"
+  netscaler.adc.sslcertkey:
+#    nitro_timeout: "{{ nitro_time|default(310) }}" # Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
+    nitro_protocol: "{{ nitro_proto|default('http') }}" # http or https
+    nitro_user: "{{ netscaler_username }}" # The username with which to authenticate to the netscaler node.
+    nitro_pass: "{{ netscaler_password }}" # The password with which to authenticate to the netscaler node.
+    nsip: "{{ netscaler_hostname }}" # The ip address of the netscaler appliance where the nitro API calls will be made. Can specify port via 1.2.3.4:5678 
+    certkey: "{{ nitro_ssl_certkey|default(omit) }}" # Name for the certificate and private-key pair. 
+    cert: "{{ nitro_ssl_cert|default(omit) }}" # Name of and, optionally, path to the X509 certificate file that is used to form the certificate-key pair. The certificate file should be present on the appliance’s hard-disk drive or solid-state drive. Storing a certificate in any location other than the default might cause inconsistency in a high availability setup. /nsconfig/ssl/ is the default path.
+    key: "{{ nitro_ssl_key|default(omit) }}" # Name of and, optionally, path to the private-key file that is used to form the certificate-key pair. The certificate file should be present on the appliance’s hard-disk drive or solid-state drive. Storing a certificate in any location other than the default might cause inconsistency in a high availability setup. /nsconfig/ssl/ is the default path.
+    expirymonitor: "{{ nitro_expirymonitor|default('DISABLED') }}" # ENABLED or DISABLED. Issue an alert when the certificate is about to expire.
+    notificationperiod: "{{ nitro_notificationperiod|default(omit) }}" # Time, in number of days, before certificate expiration, at which to generate an alert that the certificate is about to expire.
+    inform: "{{ nitro_inform|default('PEM') }}" # PEM DER or PFX
+    password: "{{ nitro_ssl_password|default(omit) }}" # .Passphrase that was used to encrypt the private-key. Use this option to load encrypted private-keys in PEM format.
+    passplain: "{{ nitro_ssl_passplain|default(omit) }}" # Pass phrase used to encrypt the private-key. Required when adding an encrypted private-key in PEM format. 
+    validate_certs: "{{ nitro_validate_certs|default(False) }}"
+    #linkcertkeyname: "{{ nitro_ssl_ca_name }}"

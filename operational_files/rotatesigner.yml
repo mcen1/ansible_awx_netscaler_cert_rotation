@@ -1,0 +1,10 @@
+---
+# name of the certkey combo to update Traffic Management > SSL > Certificates > Server Certificates
+ssl_nitro_certkey_name: "awxkeyexample2022"
+pubssl_cert_location: "secret/example.cer"
+ssl_pubkey_name: "example{{ansible_date_time.date|replace('-','')}}.cer"
+ssl_pubkey_filename: "{{ ssl_pubkey_name }}"
+ssl_privkey_name: "example.company.com.key"
+operation: "rotatecert_workflow"
+ssl_cert_location_pubk: "secret/example.cer"
+

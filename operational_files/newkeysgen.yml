@@ -1,0 +1,20 @@
+# key name without extensions
+ssl_new_key:
+  name: "matttest1"
+  private_key_name: "{{ ssl_new_key_name }}.key"
+  public_cer_name: "{{ ssl_new_key_name }}.cer"
+  certkey_name: "matttest1keypair"
+  bits: 4096
+  aes256: True
+  type: "rsa"
+nitro_ssl_newkey_csr:
+  filename: "{{ ssl_new_key_name }}.csr"
+  commonname: "*.company.com"
+  emailaddress: "nerds@company.com"
+  organizationname: "Company"
+  #Do not abbreviate state name
+  statename: "Confusion!!! LOL!!!!!!!!!!!!!!!!!!!"
+  # two letter country code
+  countryname: "US"
+operation: "newkeysgen_workflow"
+#skipsteps: True

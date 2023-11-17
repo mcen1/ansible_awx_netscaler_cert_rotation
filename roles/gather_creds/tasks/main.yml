@@ -1,0 +1,49 @@
+- name: "Get key phrase from BeyondTrust"
+  ansible.builtin.set_fact:
+    ssl_new_key_password: "{{ item.text }}"
+  with_dict: "{{ ssl_pass }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    ssl_pass: "{{ lookup('ab.beyondtrust_secrets.secrets_safe', bt_nitro_key_password_title) }}"
+    bt_folder: "Secrets"
+  delegate_to: localhost
+  run_once: true
+  no_log: true
+  ignore_errors: true
+  retries: 10
+  delay: 30
+
+- name: "Fetch creds from BT for API username/password"
+  ansible.builtin.set_fact:
+    api_password: "{{ item.value }}"
+    api_username: "{{ item.key }}"
+  with_dict: "{{ api_username_creds }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    api_username_creds: "{{ lookup('ab.beyondtrust_secrets.secrets_safe', bt_api_username_title) }}"
+    bt_folder: "Service Accounts"
+  delegate_to: localhost
+  run_once: true
+  no_log: true
+  retries: 10
+  delay: 30
+
+
+- name: "Fetch creds from BT for Netscaler username/password"
+  ansible.builtin.set_fact:
+    netscaler_password: "{{ item.value }}"
+    netscaler_username: "{{ item.key }}"
+  with_dict: "{{ ns_username_creds }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    ns_username_creds: "{{ lookup('ab.beyondtrust_secrets.secrets_safe', bt_sectigo_username_title) }}"
+    bt_folder: "Service Accounts"
+  delegate_to: localhost
+  run_once: true
+  no_log: true
+  retries: 10
+  delay: 30
+

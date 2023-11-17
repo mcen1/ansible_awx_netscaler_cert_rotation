@@ -1,0 +1,5 @@
+---
+
+- name: Run supporting tools script
+  shell: python3 supporting_tools/findvservers.py  "$(pwd)/myout.dict" "{{ nitro_existing_ssl_certkey }}"
+  delegate_to: 127.0.0.1

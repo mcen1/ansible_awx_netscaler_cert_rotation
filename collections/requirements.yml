@@ -1,0 +1,12 @@
+collections:
+  - name: ab.beyondtrust_secrets
+    type: git
+    source: https://github.com/abcorp-itops/automation-awx_plugins-beyond_trust_secrets_safe
+    version: main
+  - name: ab.tinytally_collection
+    type: git
+    source: https://github.com/abcorp-itops/ansible-shared_library-tinytally_collection
+    version: main
+  - name: community.network
+  - name: netscaler.adc 
+

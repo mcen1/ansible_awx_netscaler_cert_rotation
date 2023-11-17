@@ -1,0 +1,20 @@
+# filter http:// <netscaler-ip-address> /nitro/v1/config/lbvserver? filter=property-name1:property-val1,property-name2:property-val2
+#https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/lb/lbvserver
+- name: Get all vservers
+  delegate_to: localhost
+  register: stuffs
+  community.network.netscaler_nitro_request:
+    nsip: "{{ nitro_ip }}"
+    nitro_user: "{{ nitro_username }}"
+    nitro_pass: "{{ nitro_password }}"
+    operation: "get_all"
+    resource: "sslvserver_binding?bulkbindings=yes"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      bulkbindings: "yes"
+- name: set listo
+  set_fact:
+    listo: "{{ stuffs.http_response_body | from_yaml }}"
+  #when: 2==1
+- name: Save output to file
+  shell: echo "{{ listo.sslvserver_binding  }}" > myout.dict

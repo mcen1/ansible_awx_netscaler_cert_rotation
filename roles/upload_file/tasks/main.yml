@@ -1,0 +1,20 @@
+# https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/system/systemfile
+- name: "Upload file named {{ file_upload_name }} to {{ file_upload_filelocation }} {{ file_upload_filename }}"
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_user: "{{ netscaler_username }}"
+    nitro_pass: "{{ netscaler_password }}"
+    operation: action
+    action: add
+    resource: systemfile
+    name: "{{ file_upload_name }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      filename: "{{ file_upload_filename }}"
+      filelocation: "{{ file_upload_filelocation }}"
+      filecontent: "{{ file_upload_filecontent }}"
+  failed_when: nitro_request_output.nitro_message != "OK (0 bytes)"
+  changed_when: nitro_request_output.nitro_message == "OK (0 bytes)"
+  register: nitro_request_output
+

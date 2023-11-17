@@ -1,0 +1,26 @@
+# https://developer-docs.netscaler.com/en-us/adc-nitro-api/current-release/configuration/ssl/sslcertreq
+- name: "Generate a new SSL CSR"
+  delegate_to: localhost
+  community.network.netscaler_nitro_request:
+    nsip: "{{ netscaler_hostname }}"
+    nitro_user: "{{ netscaler_username }}"
+    nitro_pass: "{{ netscaler_password }}"
+    operation: action
+    action: create
+    resource: sslcertreq
+    name: "{{ nitro_ssl_newkey_csr.filename }}"
+    validate_certs: "{{ nitro_validate_certs | default(False) }}"
+    attributes:
+      reqfile: "{{ nitro_ssl_newkey_csr.filename  }}"
+      keyfile: "{{ nitro_ssl_newkey_filename }}"
+      commonname: "{{ nitro_ssl_newkey_csr.commonname }}"
+      emailaddress: "{{ nitro_ssl_newkey_csr.emailaddress }}"
+      organizationname: "{{ nitro_ssl_newkey_csr.organizationname }}"
+      statename: "{{ nitro_ssl_newkey_csr.statename }}"
+      countryname: "{{ nitro_ssl_newkey_csr.countryname }}"
+      pempassphrase: "{{ nitro_ssl_newkey_password }}"
+      keyform: "PEM"
+#  failed_when: nitro_request_output.nitro_message != "OK (0 bytes)"
+#  changed_when: nitro_request_output.nitro_message == "OK (0 bytes)"
+  register: nitro_csr_output
+
